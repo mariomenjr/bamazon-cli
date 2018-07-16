@@ -6,4 +6,4 @@ Make sure you save and require the MySQL and Inquirer npm packages in your homew
 
 # Challenge No. 1
 
-[Imgur](https://i.imgur.com/T3Szzrm.gifv)
+![bamazon shopping](https://i.imgur.com/T3Szzrm.gifv)

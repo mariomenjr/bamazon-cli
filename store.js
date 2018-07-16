@@ -5,6 +5,9 @@ const inquirer = require("inquirer");
 
 function Store() {
   this.conn = new Conn();
+  this.conn.connect();
+  
+  this.data = [];
 }
 
 Store.prototype.sell = function() {
@@ -15,7 +18,7 @@ Store.prototype.sell = function() {
         message: "Enter the item# you'd like to purchase:",
         name: "id",
         validate: (input, hash) => {
-          return Number(input)>0;
+          return Number(input) > 0;
         }
       },
       {
@@ -23,7 +26,7 @@ Store.prototype.sell = function() {
         message: "How many units would you like to purchase:",
         name: "sale_qty",
         validate: (input, hash) => {
-          return Number(input)>0;
+          return Number(input) > 0;
         }
       }
     ])
@@ -35,16 +38,65 @@ Store.prototype.sell = function() {
     });
 };
 
+Store.prototype.updateInventory = function(answers) {
+  this.conn.query("UPDATE bm_products SET stock_qty = (stock_qty - ?) WHERE id = ?", [Number(answers.sale_qty), Number(answers.id)], (err, results, fields) => {
+    this.continueShopping();
+  });
+}
+
 Store.prototype.checkInventory = function(answers) {
-  console.log("Checking Inventory", answers);
+  const selectedItem = Number(answers.id);
+  const selectedQty = Number(answers.sale_qty);
+
+  index = this.data.map(e => e.id).indexOf(selectedItem);
+  if (index >= 0) {
+    if (this.data[index].stock_qty >= selectedQty) {
+      console.log(
+        `\n\tYour total is $${selectedQty * this.data[index].price}\n`
+      );
+      this.updateInventory(answers);
+    } else {
+      console.log("Insufficient quantity!");
+    }
+  } else {
+    console.log(`\n\tItem ${answers.id} is not an option being shown in the table.\n`);
+    this.conn.end();
+  }
+};
+
+Store.prototype.continueShopping = function() {
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        message: "Would you like to continue shopping?",
+        name: "option",
+        choices: [
+          { value: true, name: "Yes, I'd love to" },
+          { value: false, name: "No, that's all for me this time." }
+        ]
+      }
+    ])
+    .then(answers => {
+      if (answers.option) {
+        this.showAll();
+      } else {
+        console.log(`\n\tThank you for your purchase!\n`);
+        this.conn.end();
+      }
+    })
+    .catch(err => {
+      throw err;
+    });
 };
 
 Store.prototype.showAll = function() {
-  this.conn.connect();
+  // this.conn.connect();
 
-  this.conn.query("SELECT bp.* FROM bm_products bp", (err, results, fields) => {
-    this.cliPrint(results);
-    this.conn.end();
+  this.conn.query("SELECT bp.*, bd.dept_name FROM bm_products bp LEFT JOIN bm_depts bd ON bp.dept_fk = bd.id", (err, results, fields) => {
+    this.data = results;
+    this.cliPrint(this.data);
+    // this.conn.end();
   });
 };
 
@@ -57,7 +109,7 @@ Store.prototype.cliPrint = function(obj) {
   // table is an Array, so you can `push`, `unshift`, `splice` and friends
   for (const key in obj) {
     const el = obj[key];
-    table.push([el.id, el.product_name, el.dept_fk, el.price, el.stock_qty]);
+    table.push([el.id, el.product_name, el.dept_name, el.price, el.stock_qty]);
   }
   console.log(table.toString());
   this.sell();

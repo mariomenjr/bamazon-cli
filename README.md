@@ -4,6 +4,6 @@ In this activity, you'll be creating an Amazon-like storefront with the MySQL sk
 
 Make sure you save and require the MySQL and Inquirer npm packages in your homework files--your app will need them for data input and storage.
 
-# Challenge No. 1
+### Challenge No. 1
 
 ![bamazon shopping](https://i.imgur.com/T3Szzrm.gif)

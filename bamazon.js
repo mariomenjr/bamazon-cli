@@ -1,4 +1,17 @@
 const Store = require("./lib/store");
-const store = new Store();
+const Admin = require("./lib/admin");
+const Args = require("./lib/args");
 
-store.showAll();
+const store = new Store();
+const admin = new Admin();
+const args = new Args();
+
+const options = args.resolve();
+
+if (options.cmd === "store") {
+  store.showAll();
+} else if (options.cmd === "admin") {
+  admin.options();
+} else {
+  console.log("Unknown command");
+}
